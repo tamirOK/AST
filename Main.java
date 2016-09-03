@@ -10,10 +10,10 @@ public class Main {
         Parser parser = new Parser(input);
         Expression expression = parser.parse();
 //        expression.printExpression();
-        CalculationResult result = expression.calcExpression();
-        if (result.isBoolean())
-            System.out.println(result.getBoolean());
+        if (expression.isBooleanResult())
+            System.out.println(expression.getBoolean());
         else
-            System.out.println(result.getInteger());
+            System.out.println(expression.getValue());
+
     }
 }

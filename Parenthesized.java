@@ -4,11 +4,7 @@
 public class Parenthesized extends Primary {
     private Parser parser;
 
-    public Parenthesized(String parameter) {
-        parser = new Parser(parameter);
-    }
 
-    public void printParanthesized() {
-        parser.parse().printExpression();
-    }
+
+
 }

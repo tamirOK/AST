@@ -1,14 +1,12 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-
 /**
  * Created by nezumi on 9/1/16.
  */
-public class Term {
+public class Term extends Relation {
 
     enum Opcode {
         PLUS('+'),
-        MINUS('-');
+        MINUS('-'),
+        NONE(' ');
 
         private final char sign;
 
@@ -21,56 +19,28 @@ public class Term {
         }
     }
 
-    private ArrayList<Opcode> opcodes;
-    private ArrayList<Factor> factors;
-    private String term;
-    private  static HashMap<Character, Opcode> opcodeHashMap = new HashMap<>();
 
-    static {
-        opcodeHashMap.put('+', Opcode.PLUS);
-        opcodeHashMap.put('-', Opcode.MINUS);
+    public Term() {}
+
+    public Term(Opcode op, Factor f1, Factor f2) {
+        int value1 = f1.getValue();
+        int value2 = f2.getValue();
+
+        if (op.getSign() == '+')
+            value = value1 + value2;
+        if (op.getSign() == '-')
+            value = value1 - value2;
     }
 
-    public Term() {
-        factors = new ArrayList<>();
-        opcodes = new ArrayList<>();
+    public void addFactor(Opcode op, Factor f) {
+        if (op.getSign() == '+')
+            value += f.getValue();
+        if (op.getSign() == '-')
+            value -= f.getValue();
     }
 
-    public void addFactor(String factor) {
-        factors.add(new Factor(factor));
+    public int getValue() {
+        return value;
     }
 
-    public void addOperator(char operator) {
-        opcodes.add(opcodeHashMap.get(operator));
-    }
-
-    public String getTerm() {
-        return term;
-    }
-
-    public ArrayList<Factor> getFactors() {
-        return factors;
-    }
-
-    public void printTerm() {
-        if (factors.size() != opcodes.size() + 1) {
-            System.out.println("Incorrect expression(Term)");
-            System.exit(0);
-        }
-        for (int i = 0; i < factors.size(); i++) {
-            factors.get(i).printFactor();
-            if (i < opcodes.size())
-                System.out.print(opcodes.get(i).getSign() + " ");
-        }
-    }
-
-    public double calcTerm() {
-        return ShuntingYard.calculate(term);
-    }
-
-    public Term(String term) {
-        this.term = term;
-        factors = new ArrayList<>();
-        opcodes = new ArrayList<>();
-    }
 }

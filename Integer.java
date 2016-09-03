@@ -2,13 +2,19 @@
  * Created by nezumi on 9/1/16.
  */
 public class Integer  extends Primary {
-    private double value;
+    private int value = 0;
 
-    public Integer(String integer) {
-        value = Long.parseLong(integer);
+    public Integer() {}
+
+    public Integer(int value) {
+        this.value = value;
     }
 
-    public double getValue() {
+    public int getValue() {
         return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
     }
 }

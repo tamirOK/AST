@@ -1,6 +1,3 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-
 /**
  * Created by nezumi on 9/1/16.
  */
@@ -22,64 +19,48 @@ public class Logical extends Expression {
         }
     }
 
-    private static HashMap<Character, Opcode> opcodeHashMap;
-    private ArrayList<Opcode> opcodes = new ArrayList<>();
-    private ArrayList<Relation> relations = new ArrayList<>();
 
-    public void printLogical() {
-        if (relations.size() != opcodes.size() + 1) {
-            System.out.println("Incorrect expression");
-            System.exit(0);
+
+    public Logical() {}
+
+    public Logical(Opcode op, Relation r1, Relation r2) {
+        boolean rel1 = r1.getBooleanValue();
+        boolean rel2 = r2.getBooleanValue();
+
+        booleanSet();
+
+        switch (op) {
+            case AND:
+                booleanValue = (rel1 && rel2);
+                break;
+            case OR:
+                booleanValue = (rel1 || rel2);
+                break;
+            case XOR:
+                booleanValue = (rel1 ^ rel2);
+                break;
+            default:
+                System.out.println("Unexpected booleanValue in Logical ctr");
+                break;
         }
-        for (int i = 0; i < relations.size(); i++) {
-            relations.get(i).printRelation();
-            if (i < opcodes.size())
-                System.out.print(opcodes.get(i).getSign() + " ");
+    }
+
+    public void addRelation(Opcode op, Relation r) {
+        boolean rel = r.getBooleanValue();
+
+        switch (op) {
+            case AND:
+                booleanValue = (booleanValue && rel);
+                break;
+            case OR:
+                booleanValue = (booleanValue || rel);
+                break;
+            case XOR:
+                booleanValue = (booleanValue ^ rel);
+                break;
+            default:
+                System.out.println("Unexpected booleanValue in Logical addRelation");
+                break;
         }
-    }
-
-    static {
-        opcodeHashMap = new HashMap<>();
-        opcodeHashMap.put('|', Opcode.OR);
-        opcodeHashMap.put('^', Opcode.XOR);
-        opcodeHashMap.put('&', Opcode.AND);
-    }
-
-    public Logical() {
-
-    }
-
-    public void addRelation(String relation) {
-        relations.add(new Relation(relation));
-    }
-
-    public void addLogicalOperator(Character operator) {
-        opcodes.add(opcodeHashMap.get(operator));
-    }
-
-    public int getRelationsSize() {
-        return relations.size();
-    }
-
-    public Relation getRelationItem(int position) {
-        return relations.get(position);
-    }
-
-    public CalculationResult calcLogical() {
-        if (opcodes.isEmpty())
-            return relations.get(0).calcRelation();
-        boolean result = relations.get(0).calcRelation().getBoolean();
-        for (int i = 0; i < opcodes.size(); i++) {
-            boolean temp = relations.get(i + 1).calcRelation().getBoolean();
-            char currentSign = opcodes.get(i).getSign();
-
-            if (currentSign == '|')
-                result |= temp;
-            if (currentSign == '^')
-                result ^= temp;
-            if (currentSign == '&')
-                result &= temp;
-        }
-        return new CalculationResult(result);
     }
 }

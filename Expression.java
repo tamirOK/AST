@@ -2,32 +2,22 @@
  * Created by nezumi on 9/1/16.
  */
 public class Expression {
-    private String expression;
-    private Logical logical;
+    protected int value;
+    protected boolean booleanValue, booleanValueSet = false;
 
-    public void printExpression() {
-        logical.printLogical();
+    public boolean isBooleanResult() {
+        return booleanValueSet;
     }
 
-    public Expression() {
-
+    public int getValue() {
+        return value;
     }
 
-    public CalculationResult calcExpression() {
-        return logical.calcLogical();
+    public boolean getBoolean() {
+        return booleanValue;
     }
 
-    public Expression(String expression) {
-        this.expression = expression;
+    protected void booleanSet() {
+        booleanValueSet = true;
     }
-
-    public void setLogical(Logical logical) {
-        this.logical = logical;
-    }
-
-    private String getExpression() {
-        return expression;
-    }
-
-
 }

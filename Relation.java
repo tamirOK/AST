@@ -1,16 +1,14 @@
-import java.util.HashMap;
-
 /**
  * Created by nezumi on 9/1/16.
  */
-public class Relation extends Expression {
+public class Relation extends Logical {
     enum Opcode {
         LESS("<"),
         LESS_EQ("<="),
         GREATER(">"),
         GREATER_EQ(">="),
         EQUAL("="),
-        NOT_EQUAL("!="),
+        NOT_EQUAL("/="),
         NONE("");
 
         private final String sign;
@@ -24,88 +22,43 @@ public class Relation extends Expression {
         }
     }
 
-    private String relation;
-    private Opcode op;
-    private Term left, right;
-    private static HashMap<String, Opcode> opcodeHashMap = new HashMap<>();
+    
 
-    static {
-        opcodeHashMap.put(">", Opcode.GREATER);
-        opcodeHashMap.put("<", Opcode.LESS);
-        opcodeHashMap.put(">=", Opcode.GREATER_EQ);
-        opcodeHashMap.put("<=", Opcode.LESS_EQ);
-        opcodeHashMap.put("=", Opcode.EQUAL);
-        opcodeHashMap.put("!=", Opcode.NOT_EQUAL);
-        opcodeHashMap.put("", Opcode.NONE);
+    public Relation() {
+
     }
 
-    public Relation(String relation) {
-        this.relation = relation;
-        left = right = null;
-        op = Opcode.NONE;
-    }
-
-    public void printRelation() {
-        if (left == null) {
-            System.out.println("Left null");
+    public Relation(Opcode op, Term t1, Term t2) {
+        double value1 = t1.getValue();
+        double value2 = t2.getValue();
+        booleanSet();
+        switch(op.getSign()) {
+            case ">=":
+                booleanValue = (value1 >= value2);
+                break;
+            case "<=":
+                booleanValue = (value1 <= value2);
+                break;
+            case ">":
+                booleanValue = (value1 > value2);
+                break;
+            case "<":
+                booleanValue = (value1 < value2);
+                break;
+            case "=":
+                booleanValue = (value1 == value2);
+                break;
+            case "/=":
+                booleanValue = (value1 != value2);
+                break;
+            default:
+                System.out.println("Unexpected error in Relation ctr");
+                break;
         }
-        if (left == null || (op != Opcode.NONE && right == null)) {
-            System.out.println("Incorrect expression (Relation)");
-            System.exit(0);
-        }
-
-        left.printTerm();
-        if (op != null)
-            System.out.print(op.getSign() + " ");
-        if (right != null)
-            right.printTerm();
     }
 
-    public void setFirstTerm(String term) {
-        left = new Term(term);
-    }
 
-    public void setSecondTerm(String term) {
-        right = new Term(term);
-    }
-
-    public CalculationResult calcRelation() {
-        if (op != Opcode.NONE) {
-            double leftValue = left.calcTerm();
-            double rightValue = right.calcTerm();
-            String compare = op.getSign();
-
-            if (compare.equals(">"))
-                return new CalculationResult(leftValue > rightValue);
-            if (compare.equals(">="))
-                return new CalculationResult(leftValue >= rightValue);
-            if (compare.equals("<"))
-                return new CalculationResult(leftValue < rightValue);
-            if (compare.equals("<="))
-                return new CalculationResult(leftValue <= rightValue);
-            if (compare.equals("="))
-                return new CalculationResult(leftValue == rightValue);
-            if (compare.equals("!="))
-                return new CalculationResult(leftValue != rightValue);
-        } else {
-            return new CalculationResult(left.calcTerm());
-        }
-        return null;
-    }
-
-    public Term getFirstTerm() {
-        return left;
-    }
-
-    public Term getSecondTerm() {
-        return right;
-    }
-
-    public String getRelation() {
-        return relation;
-    }
-
-    public void setOpCode(String opCode) {
-        op = opcodeHashMap.get(opCode);
+    public boolean getBooleanValue() {
+        return booleanValue;
     }
 }

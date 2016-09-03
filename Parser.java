@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-
 /**
  * Created by nezumi on 9/1/16.
  */
@@ -8,9 +6,11 @@ import java.util.ArrayList;
 
 public class Parser {
     private String input;
+    private int position;
 
     public Parser(String s) {
         input = s;
+        position = 0;
         input = input.replaceAll("\\s+", "");
     }
 
@@ -19,114 +19,194 @@ public class Parser {
     }
 
     private Expression parseLogical() {
-        Expression result = new Expression();
-        Logical logical = new Logical();
-        StringBuilder relation = new StringBuilder();
-
-
-        for (int i = 0; i < input.length(); i++) {
-            if (isLogical(input.charAt(i))) {
-                logical.addLogicalOperator(input.charAt(i));
-                logical.addRelation(relation.toString());
-                relation.setLength(0);
+        Relation result = parseRelation();
+        Logical logical = null;
+        while (true) {
+            Logical.Opcode op = parseLogOperator();
+            if (op != Logical.Opcode.NONE) {
+                Relation right = parseRelation();
+                if (logical == null)
+                    logical = new Logical(op, result, right);
+                else
+                    logical.addRelation(op, right);
                 continue;
             }
-            relation.append(input.charAt(i));
+            break;
         }
-        if (relation.length() > 0)
-            logical.addRelation(relation.toString());
+        if (logical == null)
+            return result;
+        return logical;
+    }
 
-        parseRelations(logical);
-        result.setLogical(logical);
+    private Relation parseRelation() {
+        Term result = parseTerm();
+        Relation relation = null;
+        while (true) {
+            Relation.Opcode op = parseCompareOperator();
+            if (op != Relation.Opcode.NONE) {
+                Term right = parseTerm();
+                if (relation == null)
+                    relation = new Relation(op, result, right);
+                else
+                    System.out.println("Error in parseRelation");
+                continue;
+            }
+            break;
+        }
+        if (relation == null)
+            return result;
+        return relation;
+    }
+
+    private Term parseTerm() {
+        Factor result = parseFactor();
+        Term term = null;
+        while (true) {
+            Term.Opcode op = parseTermOperator();
+            if (op != Term.Opcode.NONE) {
+                Factor right = parseFactor();
+                if (term == null)
+                    term = new Term(op, result, right);
+                else
+                    term.addFactor(op, right);
+                continue;
+            }
+            break;
+        }
+        if (term == null)
+            return result;
+        return term;
+    }
+
+    private Factor parseFactor() {
+        Primary result = parsePrimary();
+        Factor factor = null;
+        while (true) {
+            Factor.Opcode op = parseFactorOperator();
+            if (op != Factor.Opcode.NONE) {
+                Primary right = parsePrimary();
+                if (factor == null)
+                    factor = new Factor(op, result, right);
+                else
+                    factor = new Factor(op, factor, right);
+                continue;
+            }
+            break;
+        }
+        if (factor == null)
+            return result;
+        return factor;
+    }
+
+    private Primary parsePrimary() {
+        if (nextChar() == null)
+            return null;
+        Primary result = null;
+        if (Character.isDigit(nextChar()))
+            result = parseInteger();
+        else if (nextChar() == '(') {
+            getNextChar();
+            Expression expression = parse();
+            getNextChar();
+            return new Primary(expression.getValue());
+        }
         return result;
     }
 
-
-    private boolean isLogical(char ch) {
-        return (ch == '^') || (ch == '|') || (ch == '&');
-    }
-
-    private boolean isComparisonOperator(char ch) {
-        return (ch == '>') || (ch == '<') || (ch == '=') || (ch == '!');
-    }
-
-    private void parseRelations(Logical logical) {
-
-        for (int i = 0; i < logical.getRelationsSize(); i++) {
-            String relation = logical.getRelationItem(i).getRelation();
-            Relation relationItem = logical.getRelationItem(i);
-            StringBuilder term = new StringBuilder();
-            StringBuilder operator = new StringBuilder();
-            boolean setFirst = false;
-
-            for (int j = 0; j < relation.length(); j++) {
-                if (isComparisonOperator(relation.charAt(j))) {
-                    operator.append(relation.charAt(j));
-                } else {
-                    if (operator.length() > 0) {
-                        relationItem.setFirstTerm(term.toString());
-                        term.setLength(0);
-                        setFirst = true;
-                        relationItem.setOpCode(operator.toString());
-                        operator.setLength(0);
-                    }
-                    term.append(relation.charAt(j));
-                }
-            }
-            if (!setFirst) {
-                relationItem.setFirstTerm(term.toString());
-                relationItem.setOpCode("");
-            } else {
-                relationItem.setSecondTerm(term.toString());
-            }
-
-            parseTerm(relationItem.getFirstTerm());
-            parseTerm(relationItem.getSecondTerm());
+    private Integer parseInteger() {
+        Integer result = new Integer();
+        while (nextChar() != null && Character.isDigit(nextChar())) {
+            result.setValue(result.getValue() * 10 + (getNextChar() - '0'));
         }
-
+        return result;
     }
 
-    private void parseTerm(Term term) {
-        if (term == null)
-            return;
+    private Term.Opcode parseTermOperator() {
+        Character op = nextChar();
+        if (op == null || (op != '+' && op != '-'))
+            return Term.Opcode.NONE;
+        op = getNextChar();
+        if (op == '+')
+            return Term.Opcode.PLUS;
+        if (op == '-')
+            return Term.Opcode.MINUS;
+        System.out.println("Unexpected value in parseTermOperator");
+        return null;
+    }
 
-        String tempTerm = term.getTerm();
-        StringBuilder factor = new StringBuilder();
-
-        for (int i = 0; i < tempTerm.length(); i++) {
-            if (tempTerm.charAt(i) == '+' || tempTerm.charAt(i) == '-') {
-                term.addFactor(factor.toString());
-                term.addOperator(tempTerm.charAt(i));
-                factor.setLength(0);
-            } else {
-                factor.append(tempTerm.charAt(i));
-            }
+    private Relation.Opcode parseCompareOperator() {
+        StringBuilder sign = new StringBuilder();
+        Character op = nextChar();
+        if (op == null || (op != '>' && op != '<' && op != '=' && op != '/'))
+            return Relation.Opcode.NONE;
+        op = getNextChar();
+//        if (op == '<' || op == '>' || op == '=' || op == '/')
+        sign.append(op);
+        op = nextChar();
+        if (op != null && op == '=') {
+            op = getNextChar();
+            sign.append(op);
         }
-        if (factor.length() > 0)
-            term.addFactor(factor.toString());
-
-        ArrayList<Factor> factors = term.getFactors();
-
-        for (int i = 0; i < factors.size(); i++)
-            parseFactor(factors.get(i));
+        String finalSign = sign.toString();
+        if (finalSign.equals("="))
+            return Relation.Opcode.EQUAL;
+        if (finalSign.equals("/="))
+            return Relation.Opcode.NOT_EQUAL;
+        if (finalSign.equals(">"))
+            return Relation.Opcode.GREATER;
+        if (finalSign.equals("<"))
+            return Relation.Opcode.LESS;
+        if (finalSign.equals("<="))
+            return Relation.Opcode.LESS_EQ;
+        if (finalSign.equals(">="))
+            return Relation.Opcode.GREATER_EQ;
+        System.out.println("Unexpected value in parseCompareOperator");
+        return null;
     }
 
-    private void parseFactor(Factor factor) {
-        StringBuilder primary = new StringBuilder();
-        String currentFactor = factor.getFactor();
-
-        for (int i = 0; i < currentFactor.length(); i++) {
-            char currentChar = currentFactor.charAt(i);
-            if (currentChar == '*' || currentChar == '/') {
-                factor.addPrimary(primary.toString());
-                factor.addOperator(currentChar);
-                primary.setLength(0);
-            } else {
-                primary.append(currentChar);
-            }
+    private Factor.Opcode parseFactorOperator() {
+        Character op = nextChar();
+        if (op == null || (op != '/' && op != '*'))
+            return Factor.Opcode.NONE;
+        op = getNextChar();
+        Character nextChar = nextChar();
+        if (nextChar != null && nextChar == '=') {
+            position--;
+            return Factor.Opcode.NONE;
         }
-        if (primary.length() > 0)
-            factor.addPrimary(primary.toString());
+        if (op == '/')
+            return Factor.Opcode.DIV;
+        if (op == '*')
+            return Factor.Opcode.MULT;
+
+        System.out.println("Unexpected value in parseFactorOperator");
+        return null;
     }
 
+    private Logical.Opcode parseLogOperator() {
+        Character op = nextChar();
+        if (op == null || (op != '|' && op != '^' && op != '&'))
+            return Logical.Opcode.NONE;
+        op = getNextChar();
+        if (op == '|')
+            return Logical.Opcode.OR;
+        if (op == '^')
+            return Logical.Opcode.XOR;
+        if (op == '&')
+            return Logical.Opcode.AND;
+        System.out.println("Unexpected value in parseLogOperator");
+        return null;
+    }
+
+    private Character getNextChar() {
+        if (position == input.length())
+            return null;
+        return input.charAt(position++);
+    }
+
+    private Character nextChar() {
+        if (position == input.length())
+            return null;
+        return input.charAt(position);
+    }
 }

@@ -1,4 +1,3 @@
-import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -6,9 +5,11 @@ import java.util.HashMap;
  */
 public class Factor extends Term {
 
+
     enum Opcode {
         MULT('*'),
-        DIV('/');
+        DIV('/'),
+        NONE(' ');
 
         private final char sign;
 
@@ -22,44 +23,37 @@ public class Factor extends Term {
     }
 
     private static HashMap<Character, Factor.Opcode> opcodeHashMap = new HashMap<>();
-    private ArrayList<Primary> primaries;
-    private ArrayList<Opcode> opcodes;
-    private String factor;
 
     static {
         opcodeHashMap.put('*', Opcode.MULT);
         opcodeHashMap.put('/', Opcode.DIV);
     }
 
-    Factor(String factor) {
-        this.factor = factor;
-        primaries = new ArrayList<>();
-        opcodes = new ArrayList<>();
+
+    public Factor() { }
+
+    public Factor(Opcode op, Primary p1, Primary p2) {
+        int value1 = p1.getValue();
+        int value2 = p2.getValue();
+
+        if (op.getSign() == '*')
+            value = value1 * value2;
+        else if (op.getSign() == '/')
+            value = value1 / value2;
+    }
+
+    public Factor(Opcode op, Factor f, Primary p) {
+        int value1 = f.getValue();
+        int value2 = p.getValue();
+
+        if (op.getSign() == '*')
+            value = value1 * value2;
+        else if (op.getSign() == '/')
+            value = value1 / value2;
     }
 
 
-    public void printFactor() {
-        if (primaries.size() != opcodes.size() + 1) {
-            System.out.println("Incorrect expression(Factor)");
-            System.exit(0);
-        }
-        for (int i = 0; i < primaries.size(); i++) {
-            primaries.get(i).printPrimary();
-            if (i < opcodes.size())
-                System.out.print(opcodes.get(i).getSign() + " ");
-        }
+    public int getValue() {
+        return value;
     }
-
-    public void addPrimary(String primary) {
-        primaries.add(new Primary(primary));
-    }
-
-    public void addOperator(char operator) {
-        opcodes.add(opcodeHashMap.get(operator));
-    }
-
-    public String getFactor() {
-        return factor;
-    }
-
 }
